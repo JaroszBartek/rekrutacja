@@ -25,66 +25,47 @@ export const tryParseOrderFromCategoryTitle = (
   return tryConvertStringToNumber(titleWithoutHash);
 };
 
+export const sortByOrder = (
+  categoryList: CategoryListElement[]
+): CategoryListElement[] => [...categoryList].sort((a, b) => a.order - b.order);
+
+export const mapCategoryToCategoryListElement = (
+  category: Category,
+  isRootCategory = false
+): CategoryListElement => ({
+  id: category.id,
+  image: category.MetaTagDescription,
+  name: category.name,
+  order: tryParseOrderFromCategoryTitle(category.Title) ?? category.id,
+  children: sortByOrder(
+    (category?.children || []).map((x) => mapCategoryToCategoryListElement(x))
+  ),
+  showOnHome: isRootCategory && !!category.Title?.includes('#'),
+});
+
 export const categoryTree = async (
   getCategories: () => Promise<{ data: Category[] }>
 ): Promise<CategoryListElement[]> => {
   const res = await getCategories();
+  const categories = res?.data;
 
-  if (!res?.data) {
+  if (!categories) {
     return [];
   }
-
   const toShowOnHome: number[] = [];
+  const sortedCategoryTree = sortByOrder(
+    categories.map((x) => mapCategoryToCategoryListElement(x, true))
+  );
 
-  const result = res.data.map((c1) => {
-    if (c1.Title && c1.Title.includes('#')) {
-      toShowOnHome.push(c1.id);
-    }
-    const l2Kids = c1.children
-      ? c1.children.map((c2) => {
-          const l3Kids = c2.children
-            ? c2.children.map((c3) => {
-                return {
-                  id: c3.id,
-                  image: c3.MetaTagDescription,
-                  name: c3.name,
-                  order: tryParseOrderFromCategoryTitle(c1.Title) ?? c3.id,
-                  children: [],
-                  showOnHome: false,
-                };
-              })
-            : [];
-          l3Kids.sort((a, b) => a.order - b.order);
-          return {
-            id: c2.id,
-            image: c2.MetaTagDescription,
-            name: c2.name,
-            order: tryParseOrderFromCategoryTitle(c1.Title) ?? c2.id,
-            children: l3Kids,
-            showOnHome: false,
-          };
-        })
-      : [];
-    l2Kids.sort((a, b) => a.order - b.order);
-    return {
-      id: c1.id,
-      image: c1.MetaTagDescription,
-      name: c1.name,
-      order: tryParseOrderFromCategoryTitle(c1.Title) ?? c1.id,
-      children: l2Kids,
-      showOnHome: false,
-    };
-  });
-
-  result.sort((a, b) => a.order - b.order);
-
-  if (result.length <= 5) {
-    result.forEach((a) => (a.showOnHome = true));
+  if (sortedCategoryTree.length <= 5) {
+    sortedCategoryTree.forEach((a) => (a.showOnHome = true));
   } else if (toShowOnHome.length > 0) {
-    result.forEach((x) => (x.showOnHome = toShowOnHome.includes(x.id)));
+    sortedCategoryTree.forEach(
+      (x) => (x.showOnHome = toShowOnHome.includes(x.id))
+    );
   } else {
-    result.forEach((x, index) => (x.showOnHome = index < 3));
+    sortedCategoryTree.forEach((x, index) => (x.showOnHome = index < 3));
   }
 
-  return result;
+  return sortedCategoryTree;
 };
