@@ -1,7 +1,7 @@
 import test from 'ava';
 
-import { CORRECT } from '../correctResult';
-import { Category, getCategories } from '../mockedApi';
+import { CORRECT } from '../mocks/correctResult';
+import { Category, getCategories } from '../mocks/mockedApi';
 import { categoryTree } from '../task';
 
 test('categoryTree should transform and sort categories properly', async (t) => {

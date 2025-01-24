@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import { Category } from '../mockedApi';
+import { Category } from '../mocks/mockedApi';
 import { mapCategoryToCategoryListElement } from '../task';
 
 test('mapCategoryToCategoryListElement should map category correctly', (t) => {

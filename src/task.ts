@@ -1,4 +1,4 @@
-import { Category } from './mockedApi';
+import { Category } from './mocks/mockedApi';
 
 export interface CategoryListElement {
   name: string;
