@@ -61,16 +61,20 @@ export const applyShowOnHomeRules = (
 export const categoryTree = async (
   getCategories: () => Promise<{ data: Category[] }>
 ): Promise<CategoryListElement[]> => {
-  const res = await getCategories();
-  const categories = res?.data;
+  try {
+    const res = await getCategories();
+    const categories = res?.data;
 
-  if (!categories) {
+    if (!categories) {
+      return [];
+    }
+
+    const sortedCategoryTree = sortByOrder(
+      categories.map((x) => mapCategoryToCategoryListElement(x, true))
+    );
+
+    return applyShowOnHomeRules(sortedCategoryTree);
+  } catch {
     return [];
   }
-
-  const sortedCategoryTree = sortByOrder(
-    categories.map((x) => mapCategoryToCategoryListElement(x, true))
-  );
-
-  return applyShowOnHomeRules(sortedCategoryTree);
 };
