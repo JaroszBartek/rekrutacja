@@ -9,18 +9,19 @@ export interface CategoryListElement {
   showOnHome: boolean;
 }
 
-export const tryConvertStringToNumber = (value: string): number | null => {
+type Nullable<T> = T | null;
+
+export const tryConvertStringToNumber = (value: string): Nullable<number> => {
   const number = parseInt(value, 10);
   return !Number.isNaN(number) ? number : null;
 };
 
 export const tryParseOrderFromCategoryTitle = (
   title: string
-): number | null => {
+): Nullable<number> => {
   if (!title) {
     return null;
   }
-
   const [titleWithoutHash] = title.split('#');
   return tryConvertStringToNumber(titleWithoutHash);
 };
@@ -43,6 +44,20 @@ export const mapCategoryToCategoryListElement = (
   showOnHome: isRootCategory && !!category.Title?.includes('#'),
 });
 
+export const applyShowOnHomeRules = (
+  categories: CategoryListElement[]
+): CategoryListElement[] => {
+  if (categories.length <= 5) {
+    return categories.map((x) => ({ ...x, showOnHome: true }));
+  }
+
+  if (categories.some((x) => x.showOnHome)) {
+    return categories;
+  }
+
+  return categories.map((x, i) => ({ ...x, showOnHome: i < 3 }));
+};
+
 export const categoryTree = async (
   getCategories: () => Promise<{ data: Category[] }>
 ): Promise<CategoryListElement[]> => {
@@ -52,20 +67,10 @@ export const categoryTree = async (
   if (!categories) {
     return [];
   }
-  const toShowOnHome: number[] = [];
+
   const sortedCategoryTree = sortByOrder(
     categories.map((x) => mapCategoryToCategoryListElement(x, true))
   );
 
-  if (sortedCategoryTree.length <= 5) {
-    sortedCategoryTree.forEach((a) => (a.showOnHome = true));
-  } else if (toShowOnHome.length > 0) {
-    sortedCategoryTree.forEach(
-      (x) => (x.showOnHome = toShowOnHome.includes(x.id))
-    );
-  } else {
-    sortedCategoryTree.forEach((x, index) => (x.showOnHome = index < 3));
-  }
-
-  return sortedCategoryTree;
+  return applyShowOnHomeRules(sortedCategoryTree);
 };
